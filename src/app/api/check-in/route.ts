@@ -1,13 +1,11 @@
-// src/app/api/check-in/route.ts
-
 import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { lastName, confirmationNumber } = body;
 
-    // Basic validation to make sure we received the data
     if (!lastName || !confirmationNumber) {
       return NextResponse.json(
         { message: "Last name and confirmation number are required." },
@@ -15,16 +13,44 @@ export async function POST(request: Request) {
       );
     }
 
-    // --- Database logic will go here later ---
-    // For now, we'll just log the data and send back a success message.
-    console.log("API received:", { lastName, confirmationNumber });
+    // Find the passenger in the database
+    const { data: passenger, error: selectError } = await supabase
+      .from("passengers")
+      .select("*")
+      .eq("confirmation_number", confirmationNumber)
+      .ilike("last_name", lastName) // ilike is case-insensitive
+      .single(); // Expects only one result
 
-    // This is the successful response the form will receive [cite: 13]
+    if (selectError || !passenger) {
+      return NextResponse.json(
+        { message: "Invalid confirmation number or last name." },
+        { status: 404 } // 404 Not Found is more appropriate
+      );
+    }
+
+    // Check if passenger is already checked in
+    if (passenger.check_in_status === "Checked In") {
+      return NextResponse.json(
+        { message: "You have already checked in for this flight." },
+        { status: 409 } // 409 Conflict
+      );
+    }
+
+    // Update the passenger's status to "Checked In"
+    const { error: updateError } = await supabase
+      .from("passengers")
+      .update({ check_in_status: "Checked In" })
+      .eq("id", passenger.id);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
     return NextResponse.json({
-      message: `Check-in successful for passenger ${lastName}.`,
+      message: `Successfully checked in for passenger ${passenger.last_name}.`,
       status: "Checked In",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("API Error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred." },
