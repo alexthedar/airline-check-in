@@ -1,56 +1,59 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { lastName, confirmationNumber } = body;
+    const { lastName, confirmationNumber, documentBase64 } = body;
 
     if (!lastName || !confirmationNumber) {
       return NextResponse.json(
-        { message: "Last name and confirmation number are required." },
+        { message: "Required fields missing." },
         { status: 400 }
       );
     }
 
-    // Find the passenger in the database
+    // Find the passenger
     const { data: passenger, error: selectError } = await supabase
       .from("passengers")
-      .select("*")
+      .select("id, check_in_status")
       .eq("confirmation_number", confirmationNumber)
-      .ilike("last_name", lastName) // ilike is case-insensitive
-      .single(); // Expects only one result
+      .ilike("last_name", lastName)
+      .single();
 
     if (selectError || !passenger) {
       return NextResponse.json(
-        { message: "Invalid confirmation number or last name." },
-        { status: 404 } // 404 Not Found is more appropriate
+        { message: "Invalid credentials." },
+        { status: 404 }
       );
     }
 
-    // Check if passenger is already checked in
-    if (passenger.check_in_status === "Checked In") {
-      return NextResponse.json(
-        { message: "You have already checked in for this flight." },
-        { status: 409 } // 409 Conflict
-      );
-    }
-
-    // Update the passenger's status to "Checked In"
+    // Update passenger status and add the document string
     const { error: updateError } = await supabase
       .from("passengers")
-      .update({ check_in_status: "Checked In" })
+      .update({
+        check_in_status: "Checked In",
+        document_base64: documentBase64, // Save the string here
+      })
       .eq("id", passenger.id);
 
-    if (updateError) {
-      throw new Error(updateError.message);
-    }
+    if (updateError) throw new Error(updateError.message);
 
-    return NextResponse.json({
-      message: `Successfully checked in for passenger ${passenger.last_name}.`,
-      status: "Checked In",
+    // --- Add this block to create a new job ---
+    const { error: jobError } = await supabase.from("job_queue").insert({
+      job_type: "GATE_NOTIFICATION",
+      payload: { confirmation_number: confirmationNumber },
     });
-  } catch (error: unknown) {
+
+    if (jobError) {
+      // Log this error but don't fail the whole check-in process
+      console.error("Failed to create background job:", jobError.message);
+    }
+    // ------------------------------------------
+
+    return NextResponse.json({ message: `Successfully checked in.` });
+  } catch (error: any) {
     console.error("API Error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred." },

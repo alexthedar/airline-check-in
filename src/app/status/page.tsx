@@ -39,15 +39,17 @@ export default function StatusPage() {
         throw new Error(data.message || "Failed to fetch status.");
       }
       setPassengerInfo(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 sm:p-8 md:p-24">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-24">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-white">
           Check-In Status

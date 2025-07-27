@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(passengers);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Admin API Error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred." },

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.1",
+    "formidable": "^3.5.4",
+    "multer": "^2.0.2",
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -17,6 +19,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/formidable": "^3.4.5",
+    "@types/multer": "^2.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
