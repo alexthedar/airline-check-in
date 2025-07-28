@@ -30,15 +30,8 @@ const PassengerTableRow = React.memo(
           {p.check_in_status}
         </td>
         <td className="px-4 py-3">
-          {p.document_url ? (
-            <a
-              href={p.document_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-400 hover:underline"
-            >
-              View
-            </a>
+          {p.document_base64 ? (
+            <span className="text-gray-500">Received</span>
           ) : (
             <span className="text-gray-500">None</span>
           )}

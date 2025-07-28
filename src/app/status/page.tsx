@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent, useRef } from "react";
+import { useState, FormEvent, useRef, useEffect } from "react";
 import { Passenger } from "@/types/passenger-type";
 import PassengerDetails from "@/components/PassengerDetails";
 
@@ -9,6 +9,21 @@ export default function StatusPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (passengerInfo) {
+      const timer = setTimeout(() => {
+        handleClearInfo();
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [passengerInfo]);
+
+  const handleClearInfo = () => {
+    setPassengerInfo(null);
+    setConfirmationNumber("");
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

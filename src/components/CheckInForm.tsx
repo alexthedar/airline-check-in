@@ -1,4 +1,4 @@
-import React, { FormEvent } from "react";
+import React, { FormEvent, useRef } from "react";
 import TextInput from "./TextInput";
 
 type CheckInFormProps = {
@@ -9,6 +9,7 @@ type CheckInFormProps = {
   handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isLoading: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
 const CheckInForm: React.FC<CheckInFormProps> = ({
@@ -19,6 +20,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({
   handleSubmit,
   handleFileChange,
   isLoading,
+  fileInputRef,
 }) => {
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -63,6 +65,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({
           id="document-upload"
           name="document"
           type="file"
+          ref={fileInputRef}
           onChange={handleFileChange}
           className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
         />

@@ -7,5 +7,5 @@ export type Passenger = {
     destination: string;
   };
   check_in_status: string;
-  document_url: string | null;
+  document_base64: string | null;
 };

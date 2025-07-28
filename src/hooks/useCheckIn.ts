@@ -29,9 +29,16 @@ export function useCheckIn() {
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.message);
-      setMessage(data.message);
-      return data.passenger;
+      if (!response.ok) {
+        if (response.status === 409) {
+          setMessage("This passenger is already checked in.");
+        } else {
+          throw new Error(data.message);
+        }
+      } else {
+        setMessage(data.message);
+        return data.passenger;
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -44,5 +51,5 @@ export function useCheckIn() {
     }
   };
 
-  return { checkIn, isLoading, message, error };
+  return { checkIn, isLoading, message, error, setMessage };
 }

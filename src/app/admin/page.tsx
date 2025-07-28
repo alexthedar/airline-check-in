@@ -39,6 +39,9 @@ export default function AdminPage() {
       } else {
         setError("An unexpected error occurred.");
       }
+      setSecretKey("");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -6,9 +6,9 @@ export async function GET(
   { params }: { params: { confirmation: string } }
 ) {
   try {
-    const { confirmation: confirmationNumber } = await params;
+    const { confirmation } = await params;
 
-    if (!confirmationNumber) {
+    if (!confirmation) {
       return NextResponse.json(
         { message: "Confirmation number is required." },
         { status: 400 }
@@ -18,7 +18,7 @@ export async function GET(
     const { data: passenger, error } = await supabase
       .from("passengers")
       .select("last_name, flight_info, check_in_status")
-      .eq("confirmation_number", confirmationNumber)
+      .eq("confirmation_number", confirmation)
       .single();
 
     if (error || !passenger) {

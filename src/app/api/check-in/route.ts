@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -28,6 +27,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (passenger.check_in_status === "Checked In") {
+      return NextResponse.json(
+        { message: "You have already checked in for this flight." },
+        { status: 409 }
+      );
+    }
+
     const { data: updatedPassenger, error: updateError } = await supabase
       .from("passengers")
       .update({
@@ -53,7 +59,7 @@ export async function POST(request: Request) {
       message: `Successfully checked in.`,
       passenger: updatedPassenger,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred." },

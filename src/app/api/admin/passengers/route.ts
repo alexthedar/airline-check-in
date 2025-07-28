@@ -14,6 +14,7 @@ export async function GET(request: Request) {
       .from("passengers")
       .select("*")
       .order("created_at", { ascending: false });
+    console.log("🚀 ~ GET ~ data:", passengers);
 
     if (error) {
       throw new Error(error.message);

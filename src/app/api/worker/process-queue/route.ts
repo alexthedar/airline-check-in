@@ -8,33 +8,44 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data: job, error: selectError } = await supabase
-      .from("job_queue")
-      .select("*")
-      .eq("status", "pending")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .single();
+    const batchSize = 10;
+    let totalProcessed = 0;
 
-    if (selectError) {
-      return NextResponse.json({ message: "No pending jobs to process." });
-    }
+    while (true) {
+      const { data: jobs, error: selectError } = await supabase
+        .from("job_queue")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: true })
+        .limit(batchSize);
 
-    console.log(`Processing job ${job.id}: ${job.job_type}`);
-    console.log(`-> Payload:`, job.payload);
-    console.log("-> Gate notification sent (simulation).");
+      if (selectError || !jobs || jobs.length === 0) {
+        break;
+      }
 
-    const { error: updateError } = await supabase
-      .from("job_queue")
-      .update({ status: "completed" })
-      .eq("id", job.id);
+      jobs.forEach((job) => {
+        console.log(`Processing job ${job.id}: ${job.job_type}`);
+        console.log(`-> Payload:`, job.payload);
+        console.log("-> Gate notification sent (simulation).");
+      });
 
-    if (updateError) {
-      throw new Error(`Failed to update job status: ${updateError.message}`);
+      const jobIds = jobs.map((job) => job.id);
+      const { error: updateError } = await supabase
+        .from("job_queue")
+        .update({ status: "completed" })
+        .in("id", jobIds);
+
+      if (updateError) {
+        throw new Error(
+          `Failed to update job statuses: ${updateError.message}`
+        );
+      }
+
+      totalProcessed += jobs.length;
     }
 
     return NextResponse.json({
-      message: `Successfully processed job ${job.id}.`,
+      message: `Successfully processed ${totalProcessed} job(s).`,
     });
   } catch (error) {
     if (error instanceof Error) {
