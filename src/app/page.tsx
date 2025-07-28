@@ -2,7 +2,7 @@
 
 import { useCheckIn } from "@/hooks/useCheckIn";
 import { useFileReader } from "@/hooks/useFileReader";
-import { useState, FormEvent, useRef, useEffect } from "react";
+import { useState, FormEvent, useRef, useEffect, useCallback } from "react";
 import PassengerDetails from "@/components/PassengerDetails";
 import { Passenger } from "@/types/passenger-type";
 import CheckInForm from "@/components/CheckInForm";
@@ -16,6 +16,16 @@ export default function CheckInPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const handleClearInfo = useCallback(() => {
+    setPassengerInfo(null);
+    setMessage("");
+    setLastName("");
+    setConfirmationNumber("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [setMessage]);
+
   useEffect(() => {
     if (passengerInfo) {
       const timer = setTimeout(() => {
@@ -24,17 +34,7 @@ export default function CheckInPage() {
 
       return () => clearTimeout(timer);
     }
-  }, [passengerInfo, setMessage]);
-
-  const handleClearInfo = () => {
-    setPassengerInfo(null);
-    setMessage("");
-    setLastName("");
-    setConfirmationNumber("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+  }, [handleClearInfo, passengerInfo, setMessage]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
