@@ -1,24 +1,14 @@
 "use client";
-
-import { useState, FormEvent } from "react";
-
-// Define a type for our passenger data for better type safety
-type PassengerInfo = {
-  last_name: string;
-  flight_info: {
-    flight_number: string;
-    destination: string;
-  };
-  check_in_status: string;
-};
+import { useState, FormEvent, useRef } from "react";
+import { Passenger } from "@/types/passenger-type";
+import PassengerDetails from "@/components/PassengerDetails";
 
 export default function StatusPage() {
   const [confirmationNumber, setConfirmationNumber] = useState("");
-  const [passengerInfo, setPassengerInfo] = useState<PassengerInfo | null>(
-    null
-  );
+  const [passengerInfo, setPassengerInfo] = useState<Passenger | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,9 +20,16 @@ export default function StatusPage() {
     setError("");
     setPassengerInfo(null);
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
-      // We will create this API route in the next step
-      const response = await fetch(`/api/status/${confirmationNumber}`);
+      const response = await fetch(`/api/status/${confirmationNumber}`, {
+        signal: abortController.signal,
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -40,9 +37,11 @@ export default function StatusPage() {
       }
       setPassengerInfo(data);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +66,9 @@ export default function StatusPage() {
               className="appearance-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Confirmation Number"
               value={confirmationNumber}
-              onChange={(e) => setConfirmationNumber(e.target.value)}
+              onChange={(e) => {
+                setConfirmationNumber(e.target.value);
+              }}
             />
           </div>
           <button
@@ -80,7 +81,12 @@ export default function StatusPage() {
         </form>
 
         {error && (
-          <p className="mt-4 text-sm text-center text-red-400">{error}</p>
+          <p
+            className="mt-4 text-sm text-center text-red-400"
+            aria-live="assertive"
+          >
+            {error}
+          </p>
         )}
 
         {passengerInfo && (
@@ -88,30 +94,7 @@ export default function StatusPage() {
             <h2 className="text-lg font-semibold text-white mb-2">
               Flight Details
             </h2>
-            <p>
-              <strong className="text-gray-400">Passenger:</strong>{" "}
-              {passengerInfo.last_name}
-            </p>
-            <p>
-              <strong className="text-gray-400">Flight:</strong>{" "}
-              {passengerInfo.flight_info.flight_number}
-            </p>
-            <p>
-              <strong className="text-gray-400">Destination:</strong>{" "}
-              {passengerInfo.flight_info.destination}
-            </p>
-            <p>
-              <strong className="text-gray-400">Status:</strong>
-              <span
-                className={
-                  passengerInfo.check_in_status === "Checked In"
-                    ? "text-green-400"
-                    : "text-yellow-400"
-                }
-              >
-                {` ${passengerInfo.check_in_status}`}
-              </span>
-            </p>
+            <PassengerDetails passengerInfo={passengerInfo} />
           </div>
         )}
       </div>

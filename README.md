@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Airline Check-In Portal
+
+This is an MVP of an Airline Check-In System built using Next.js, TypeScript, and Supabase. The application allows passengers to check in online before their flight, upload documents, and view their check-in status. Airline staff can see all passenger check-ins and update their status.
+
+## Features
+
+- **Passenger Check-In**: Passengers can enter their last name and confirmation number to check in and upload necessary documents.
+- **Check-In Status**: Passengers can view their check-in status by entering their confirmation number.
+- **Admin Dashboard**: Airline staff can log in using a secret key to view and update passenger check-in statuses.
+- **Responsive Design**: The application is designed to be responsive and accessible on various devices.
+
+## Technologies Used
+
+- **Next.js**: A React framework for building server-side rendered applications.
+- **TypeScript**: A typed superset of JavaScript that compiles to plain JavaScript.
+- **Supabase**: An open-source Firebase alternative for backend services.
+- **Tailwind CSS**: A utility-first CSS framework for styling.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js and npm installed on your machine.
+- A Supabase account and project set up.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Clone the repository**:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   git clone https://github.com/your-username/airline-check-in.git
+   cd airline-check-in
+   ```
 
-## Learn More
+2. **Install dependencies**:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Set up environment variables**:
+   Create a `.env.local` file in the root directory and add your Supabase credentials:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ADMIN_SECRET_KEY=your-admin-secret-key
+   ```
 
-## Deploy on Vercel
+4. **Run the development server**:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Usage
+
+- **Passenger Check-In**: Navigate to the home page and fill out the check-in form with your last name and confirmation number. Upload any required documents and submit the form.
+- **Check-In Status**: Go to the status page and enter your confirmation number to view your check-in status.
+- **Admin Access**: Navigate to the admin page, enter the secret key, and log in to view and manage passenger check-ins.

@@ -30,13 +30,15 @@ export async function POST(request: Request) {
     }
 
     // Update passenger status and add the document string
-    const { error: updateError } = await supabase
+    const { data: updatedPassenger, error: updateError } = await supabase
       .from("passengers")
       .update({
         check_in_status: "Checked In",
-        document_base64: documentBase64, // Save the string here
+        document_base64: documentBase64,
       })
-      .eq("id", passenger.id);
+      .eq("id", passenger.id)
+      .select() // Add this to return the updated row
+      .single(); // Add this because we expect one record back
 
     if (updateError) throw new Error(updateError.message);
 
@@ -52,7 +54,10 @@ export async function POST(request: Request) {
     }
     // ------------------------------------------
 
-    return NextResponse.json({ message: `Successfully checked in.` });
+    return NextResponse.json({
+      message: `Successfully checked in.`,
+      passenger: updatedPassenger,
+    });
   } catch (error: any) {
     console.error("API Error:", error);
     return NextResponse.json(
