@@ -5,7 +5,6 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // 1. Authenticate the request
   const authHeader = request.headers.get("Authorization");
   const expectedToken = `Bearer ${process.env.ADMIN_SECRET_KEY}`;
 
@@ -13,7 +12,6 @@ export async function PATCH(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. Update the passenger status
   try {
     const { id: passengerId } = await params;
 
@@ -30,7 +28,7 @@ export async function PATCH(
       .from("passengers")
       .update({ check_in_status: newStatus })
       .eq("id", passengerId)
-      .select() // Important: .select() returns the updated row
+      .select()
       .single();
 
     if (error) {
