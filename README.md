@@ -60,3 +60,25 @@ This is an MVP of an Airline Check-In System built using Next.js, TypeScript, an
 - **Passenger Check-In**: Navigate to the home page and fill out the check-in form with your last name and confirmation number. Upload any required documents and submit the form.
 - **Check-In Status**: Go to the status page and enter your confirmation number to view your check-in status.
 - **Admin Access**: Navigate to the admin page, enter the secret key, and log in to view and manage passenger check-ins.
+
+### Process Queue
+
+The process queue is a feature designed to handle asynchronous tasks related to passenger check-ins.
+
+To manually trigger the processing of the job queue, use the following curl command:
+
+```bash
+curl -X GET http://localhost:3000/api/worker/process-queue \
+  -H "Authorization: Bearer YOUR_SECRET_KEY_HERE"
+```
+
+### Expire Check-Ins
+
+The expire check-ins feature is designed to automatically mark check-ins as expired after the travel date has passed.
+
+To manually trigger the expiration of check-ins, use the following curl command:
+
+```bash
+curl -X GET http://localhost:3000/api/cron/expire-checkins \
+  -H "Authorization: Bearer SUPER_SECRET_PASSWORD_123"
+```
