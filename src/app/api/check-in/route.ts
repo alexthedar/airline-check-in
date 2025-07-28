@@ -14,7 +14,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find the passenger
     const { data: passenger, error: selectError } = await supabase
       .from("passengers")
       .select("id, check_in_status")
@@ -29,7 +28,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update passenger status and add the document string
     const { data: updatedPassenger, error: updateError } = await supabase
       .from("passengers")
       .update({
@@ -37,22 +35,19 @@ export async function POST(request: Request) {
         document_base64: documentBase64,
       })
       .eq("id", passenger.id)
-      .select() // Add this to return the updated row
-      .single(); // Add this because we expect one record back
+      .select()
+      .single();
 
     if (updateError) throw new Error(updateError.message);
 
-    // --- Add this block to create a new job ---
     const { error: jobError } = await supabase.from("job_queue").insert({
       job_type: "GATE_NOTIFICATION",
       payload: { confirmation_number: confirmationNumber },
     });
 
     if (jobError) {
-      // Log this error but don't fail the whole check-in process
       console.error("Failed to create background job:", jobError.message);
     }
-    // ------------------------------------------
 
     return NextResponse.json({
       message: `Successfully checked in.`,

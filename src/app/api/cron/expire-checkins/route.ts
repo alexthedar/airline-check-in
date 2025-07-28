@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabaseClient";
 export const revalidate = 86400;
 
 export async function GET(request: Request) {
-  // Secure the endpoint with a secret key
   const authHeader = request.headers.get("Authorization");
   if (authHeader !== `Bearer ${process.env.ADMIN_SECRET_KEY}`) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -20,8 +19,8 @@ export async function GET(request: Request) {
     const { data: passengersToExpire, error: selectError } = await supabase
       .from("passengers")
       .select("id")
-      .lt("travel_date", today) // 'lt' means "less than"
-      .neq("check_in_status", "Expired"); // 'neq' means "not equal to"
+      .lt("travel_date", today)
+      .neq("check_in_status", "Expired");
 
     if (selectError) {
       throw new Error(`Failed to query for passengers: ${selectError.message}`);

@@ -9,7 +9,7 @@ export function useCheckIn() {
     lastName: string,
     confirmationNumber: string,
     documentBase64: string | null,
-    signal: AbortSignal
+    signal: AbortSignal | undefined
   ) => {
     setIsLoading(true);
     setError("");

@@ -24,7 +24,12 @@ describe("useCheckIn Hook", () => {
 
     let checkInResult;
     await act(async () => {
-      checkInResult = await result.current.checkIn("Smith", "ABC123", null);
+      checkInResult = await result.current.checkIn(
+        "Smith",
+        "ABC123",
+        null,
+        undefined
+      );
     });
 
     expect(result.current.isLoading).toBe(false);
@@ -43,7 +48,12 @@ describe("useCheckIn Hook", () => {
 
     let checkInResult;
     await act(async () => {
-      checkInResult = await result.current.checkIn("Wrong", "Name", null);
+      checkInResult = await result.current.checkIn(
+        "Wrong",
+        "Name",
+        null,
+        undefined
+      );
     });
 
     expect(result.current.isLoading).toBe(false);
@@ -61,7 +71,7 @@ describe("useCheckIn Hook", () => {
     const { result } = renderHook(() => useCheckIn());
 
     act(() => {
-      result.current.checkIn("Smith", "ABC123", null);
+      result.current.checkIn("Smith", "ABC123", null, undefined);
     });
 
     expect(result.current.isLoading).toBe(true);
