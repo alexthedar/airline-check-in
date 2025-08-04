@@ -1,59 +1,57 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import CheckInPage from "../page";
+import CheckInClient from "../CheckInClient";
+import type { Passenger } from "@/types/passenger-type";
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+type ActionData = {
+  message?: string;
+  error?: string;
+  passenger?: Passenger;
+};
 
-beforeEach(() => {
-  mockFetch.mockClear();
-});
-
-describe("CheckInPage", () => {
-  it("should allow a user to fill out the form and submit", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ message: "Check-in successful!" }),
-    });
-
-    render(<CheckInPage />);
-
-    const lastNameInput = screen.getByPlaceholderText(/last name/i);
-    const confirmationInput =
-      screen.getByPlaceholderText(/confirmation number/i);
-    const checkInButton = screen.getByRole("button", { name: /check in/i });
-
-    fireEvent.change(lastNameInput, { target: { value: "Smith" } });
-    fireEvent.change(confirmationInput, { target: { value: "ABC123" } });
-
-    fireEvent.click(checkInButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/check-in successful!/i)).toBeInTheDocument();
-    });
-
-    expect(mockFetch).toHaveBeenCalledWith("/api/check-in", expect.any(Object));
+const fillForm = () => {
+  fireEvent.change(screen.getByPlaceholderText(/last name/i), {
+    target: { value: "Smith" },
   });
+  fireEvent.change(screen.getByPlaceholderText(/confirmation number/i), {
+    target: { value: "ABC123" },
+  });
+};
 
-  it("should display an error message if the API call fails", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ message: "Invalid confirmation number." }),
-    });
+/* -------------------------------------------------------------------------- */
+describe("Check-In client island", () => {
+  it("shows the success banner when the action succeeds", async () => {
+    const mockAction = jest
+      .fn<Promise<ActionData>, [ActionData, FormData]>()
+      .mockResolvedValue({
+        message: "Successfully checked-in.",
+      });
 
-    render(<CheckInPage />);
-
-    fireEvent.change(screen.getByPlaceholderText(/last name/i), {
-      target: { value: "Smith" },
-    });
-    fireEvent.change(screen.getByPlaceholderText(/confirmation number/i), {
-      target: { value: "ABC123" },
-    });
+    render(<CheckInClient action={mockAction} />);
+    fillForm();
     fireEvent.click(screen.getByRole("button", { name: /check in/i }));
 
-    await waitFor(() => {
+    await waitFor(() =>
+      expect(screen.getByText(/successfully checked-in./i)).toBeInTheDocument()
+    );
+    expect(mockAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the error banner when the action returns an error", async () => {
+    const mockAction = jest
+      .fn<Promise<ActionData>, [ActionData, FormData]>()
+      .mockResolvedValue({
+        error: "Invalid confirmation number.",
+      });
+
+    render(<CheckInClient action={mockAction} />);
+    fillForm();
+    fireEvent.click(screen.getByRole("button", { name: /check in/i }));
+
+    await waitFor(() =>
       expect(
         screen.getByText(/invalid confirmation number./i)
-      ).toBeInTheDocument();
-    });
+      ).toBeInTheDocument()
+    );
+    expect(mockAction).toHaveBeenCalledTimes(1);
   });
 });
