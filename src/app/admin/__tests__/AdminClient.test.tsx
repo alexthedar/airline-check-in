@@ -4,7 +4,7 @@ import AdminClient from "../AdminClient";
 import type { Passenger } from "@/types/passenger-type";
 import type { AdminState } from "../page";
 
-/* ──────────────────────────  component mocks ────────────────────────── */
+/* ────────── mock table / card so we can click “Update” without real markup ────────── */
 jest.mock("@/components/PassengerTable", () => ({
   __esModule: true,
   default: ({ passengers = [], onStatusUpdate }: any) =>
@@ -35,7 +35,8 @@ jest.mock("@/components/PassengerCard", () => ({
     ),
 }));
 
-/* ──────────────────────────── helper types ──────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/* helpers                                                                    */
 type Action = (prev: AdminState, payload: any) => Promise<AdminState>;
 
 const mockPassengers: Passenger[] = [
@@ -52,8 +53,8 @@ const mockPassengers: Passenger[] = [
 const renderWithActions = (login: Action, toggle: Action) =>
   render(<AdminClient login={login} toggle={toggle} />);
 
-/* ───────────────────────────────── tests ─────────────────────────────── */
-describe("AdminClient island", () => {
+/* -------------------------------------------------------------------------- */
+describe("AdminClient", () => {
   it("logs in with secret key and shows dashboard", async () => {
     const loginAction: Action = jest.fn().mockResolvedValue({
       passengers: mockPassengers,
@@ -80,7 +81,7 @@ describe("AdminClient island", () => {
     expect(loginAction).toHaveBeenCalledTimes(1);
   });
 
-  it("displays error message on invalid key", async () => {
+  it("displays error banner on invalid key", async () => {
     const loginAction: Action = jest
       .fn()
       .mockResolvedValue({ error: "Invalid secret key." });
@@ -89,7 +90,7 @@ describe("AdminClient island", () => {
     renderWithActions(loginAction, toggleAction);
 
     fireEvent.change(screen.getByPlaceholderText(/enter secret key/i), {
-      target: { value: "wrong" },
+      target: { value: "bad-key" },
     });
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
@@ -98,14 +99,12 @@ describe("AdminClient island", () => {
     );
   });
 
-  it("optimistically updates status when update button clicked", async () => {
-    /* first call (login) returns list; second call (toggle) flips status */
+  it("calls toggle action when Update button is clicked", async () => {
     const loginAction: Action = jest.fn().mockResolvedValue({
       passengers: mockPassengers,
       authenticated: true,
     });
     const updated = [{ ...mockPassengers[0], check_in_status: "Not yet" }];
-
     const toggleAction: Action = jest.fn().mockResolvedValue({
       passengers: updated,
       authenticated: true,
@@ -113,7 +112,7 @@ describe("AdminClient island", () => {
 
     renderWithActions(loginAction, toggleAction);
 
-    /* login */
+    /* login first */
     fireEvent.change(screen.getByPlaceholderText(/enter secret key/i), {
       target: { value: "key" },
     });
@@ -125,7 +124,7 @@ describe("AdminClient island", () => {
       ).toBeGreaterThan(0)
     );
 
-    /* click first Update button */
+    /* click Update */
     fireEvent.click(screen.getAllByRole("button", { name: /update/i })[0]);
 
     await waitFor(() => expect(toggleAction).toHaveBeenCalledTimes(1));

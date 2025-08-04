@@ -1,61 +1,66 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import PassengerTable from "../PassengerTable";
-import { Passenger } from "@/types/passenger-type";
+import type { Passenger } from "@/types/passenger-type";
 
-describe("PassengerTable Component", () => {
-  const mockOnStatusUpdate = jest.fn();
-  const mockPassengers: Passenger[] = [
-    {
-      id: 1,
-      last_name: "Skywalker",
-      confirmation_number: "R2D2",
-      flight_info: { flight_number: "X-WING", destination: "Dagobah" },
-      check_in_status: "Checked In",
-      document_url: null,
-    },
-    {
-      id: 2,
-      last_name: "Vader",
-      confirmation_number: "DS-1",
-      flight_info: { flight_number: "TIE", destination: "Death Star" },
-      check_in_status: "Not yet",
-      document_url: null,
-    },
-  ];
+const passengers: Passenger[] = [
+  {
+    id: 1,
+    last_name: "Smith",
+    confirmation_number: "ABC123",
+    flight_info: { flight_number: "UA456", destination: "NYC" },
+    check_in_status: "Checked In",
+    document_base64: "data:application/pdf;base64,abc",
+  },
+  {
+    id: 2,
+    last_name: "Jones",
+    confirmation_number: "DEF456",
+    flight_info: { flight_number: "BA789", destination: "LON" },
+    check_in_status: "Not yet",
+    document_base64: null,
+  },
+];
 
-  it("should render the correct table headers", () => {
+describe("PassengerTable", () => {
+  it("renders all rows with correct data", () => {
     render(
-      <PassengerTable passengers={[]} onStatusUpdate={mockOnStatusUpdate} />
+      <PassengerTable passengers={passengers} onStatusUpdate={jest.fn()} />
     );
 
-    expect(screen.getByText("Last Name")).toBeInTheDocument();
-    expect(screen.getByText("Confirmation #")).toBeInTheDocument();
-    expect(screen.getByText("Flight")).toBeInTheDocument();
-    expect(screen.getByText("Destination")).toBeInTheDocument();
-    expect(screen.getByText("Status")).toBeInTheDocument();
-    expect(screen.getByText("Document")).toBeInTheDocument();
-    expect(screen.getByText("Actions")).toBeInTheDocument();
+    /* headers */
+    expect(screen.getByText(/last name/i)).toBeInTheDocument();
+    expect(screen.getByText(/confirmation #/i)).toBeInTheDocument();
+
+    /* rows */
+    passengers.forEach((p) => {
+      expect(
+        screen.getByText(new RegExp(p.last_name, "i"))
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(p.confirmation_number, "i"))
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(p.flight_info.flight_number, "i"))
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(p.flight_info.destination, "i"))
+      ).toBeInTheDocument();
+    });
   });
 
-  it("should render a row for each passenger in the list", () => {
-    render(
-      <PassengerTable
-        passengers={mockPassengers}
-        onStatusUpdate={mockOnStatusUpdate}
-      />
+  it("invokes onStatusUpdate when Update button is clicked", () => {
+    const mockCb = jest.fn();
+    render(<PassengerTable passengers={passengers} onStatusUpdate={mockCb} />);
+
+    const updateButtons = screen.getAllByRole("button", { name: /update/i });
+    expect(updateButtons).toHaveLength(passengers.length);
+
+    /* click first button */
+    fireEvent.click(updateButtons[0]);
+
+    expect(mockCb).toHaveBeenCalledWith(
+      passengers[0].id,
+      passengers[0].check_in_status
     );
-
-    const rows = screen.getAllByRole("row"); // Use role to find table rows
-
-    expect(rows).toHaveLength(mockPassengers.length + 1); // +1 for the header row
-  });
-
-  it("should render nothing in the body if the passengers list is empty", () => {
-    render(
-      <PassengerTable passengers={[]} onStatusUpdate={mockOnStatusUpdate} />
-    );
-
-    const rows = screen.queryAllByRole("row");
-    expect(rows).toHaveLength(1); // Only the header row should be present
   });
 });

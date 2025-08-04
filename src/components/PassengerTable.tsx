@@ -38,6 +38,7 @@ const PassengerTableRow = React.memo(
         </td>
         <td className="px-4 py-3">
           <button
+            type="button" // ← prevent full-page form submit
             onClick={() => onStatusUpdate(p.id, p.check_in_status)}
             className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
           >
