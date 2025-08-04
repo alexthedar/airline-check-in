@@ -1,110 +1,79 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import CheckInClient from "./CheckInClient";
+import { supabase } from "@/lib/supabaseClient";
+import type { Passenger } from "@/types/passenger-type";
 
-import { useCheckIn } from "@/hooks/useCheckIn";
-import { useFileReader } from "@/hooks/useFileReader";
-import { useState, FormEvent, useRef, useEffect, useCallback } from "react";
-import PassengerDetails from "@/components/PassengerDetails";
-import { Passenger } from "@/types/passenger-type";
-import CheckInForm from "@/components/CheckInForm";
+/* ---- shape returned to the client component ---- */
+type ActionData = {
+  message?: string;
+  error?: string;
+  passenger?: Passenger;
+};
+/* ------------------------------------------------ */
 
+async function checkIn(
+  _prevState: ActionData, // required by useFormState, but not used
+  formData: FormData
+): Promise<ActionData> {
+  "use server";
+
+  const lastName = (formData.get("lastName") as string | null)?.trim() ?? "";
+  const confirmationNumber =
+    (formData.get("confirmationNumber") as string | null)?.trim() ?? "";
+  const file = formData.get("document") as File | null;
+
+  if (!lastName || !confirmationNumber) {
+    return { error: "Required fields missing." };
+  }
+
+  /* optionally convert the uploaded file to base-64 */
+  let documentBase64: string | null = null;
+  if (file && file.size) {
+    documentBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  }
+
+  /* look-up passenger */
+  const { data: passenger, error: selectErr } = await supabase
+    .from("passengers")
+    .select(
+      "id, last_name, confirmation_number, flight_info, check_in_status, document_base64"
+    )
+    .eq("confirmation_number", confirmationNumber)
+    .ilike("last_name", lastName)
+    .single();
+
+  if (selectErr || !passenger)
+    return { error: "Invalid last-name / confirmation #." };
+
+  if (passenger.check_in_status === "Checked In") {
+    return { message: "You are already checked-in.", passenger };
+  }
+
+  /* update status + save document */
+  const { data: updatedPassenger, error: updateErr } = await supabase
+    .from("passengers")
+    .update({ check_in_status: "Checked In", document_base64: documentBase64 })
+    .eq("id", passenger.id)
+    .select()
+    .single();
+
+  if (updateErr) return { error: updateErr.message };
+
+  revalidatePath("/"); // make sure page revalidates for any SSR usage
+  return { message: "Successfully checked-in.", passenger: updatedPassenger };
+}
+
+/* ----------- page shell (server component) ----------- */
 export default function CheckInPage() {
-  const [lastName, setLastName] = useState("");
-  const [confirmationNumber, setConfirmationNumber] = useState("");
-  const { checkIn, isLoading, message, error, setMessage } = useCheckIn();
-  const { fileBase64, fileError, readFile } = useFileReader();
-  const [passengerInfo, setPassengerInfo] = useState<Passenger | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleClearInfo = useCallback(() => {
-    setPassengerInfo(null);
-    setMessage("");
-    setLastName("");
-    setConfirmationNumber("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, [setMessage]);
-
-  useEffect(() => {
-    if (passengerInfo) {
-      const timer = setTimeout(() => {
-        handleClearInfo();
-      }, 10000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [handleClearInfo, passengerInfo, setMessage]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    const passengerData = await checkIn(
-      lastName,
-      confirmationNumber,
-      fileBase64,
-      abortController.signal
-    );
-
-    if (passengerData) {
-      setPassengerInfo(passengerData);
-    } else {
-      setLastName("");
-      setConfirmationNumber("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Clear the file input
-      }
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-24">
       <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-white">
           Airline Check-In
         </h1>
-        <CheckInForm
-          lastName={lastName}
-          setLastName={setLastName}
-          confirmationNumber={confirmationNumber}
-          setConfirmationNumber={setConfirmationNumber}
-          handleSubmit={handleSubmit}
-          handleFileChange={handleFileChange}
-          isLoading={isLoading}
-          fileInputRef={fileInputRef}
-        />
-        {message && (
-          <p className="mt-2 text-sm text-center text-green-400">{message}</p>
-        )}
-        {passengerInfo && (
-          <div
-            className={`mt-6 p-4 border border-gray-600 rounded-lg text-sm fade-out ${
-              !passengerInfo ? "hidden" : ""
-            }`}
-          >
-            <h2 className="text-lg font-semibold text-white mb-2">
-              Flight Details
-            </h2>
-            <PassengerDetails passengerInfo={passengerInfo} />
-          </div>
-        )}
-        {(error || fileError) && (
-          <p className="mt-2 text-sm text-center text-red-400">{error}</p>
-        )}
+
+        {/* interactive island that renders the form + feedback */}
+        <CheckInClient action={checkIn} />
       </div>
     </main>
   );

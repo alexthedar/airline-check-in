@@ -7,21 +7,21 @@ type StatusData = {
   passenger?: Passenger;
 };
 
-const fillForm = (conf = "ABC123") =>
+const fillForm = (confirmation = "ABC123") =>
   fireEvent.change(screen.getByPlaceholderText(/confirmation number/i), {
-    target: { value: conf },
+    target: { value: confirmation },
   });
 
-describe("Status client island", () => {
-  it("shows passenger details on success", async () => {
-    const mockPassenger = {
+describe("StatusClient island", () => {
+  it("shows passenger details when the lookup succeeds", async () => {
+    const mockPassenger: Passenger = {
       id: 1,
       last_name: "Smith",
       confirmation_number: "ABC123",
       flight_info: { flight_number: "XY99", destination: "NYC" },
       check_in_status: "Checked In",
       document_base64: null,
-    } as Passenger;
+    };
 
     const mockAction = jest
       .fn<Promise<StatusData>, [StatusData, FormData]>()
@@ -39,7 +39,7 @@ describe("Status client island", () => {
     expect(mockAction).toHaveBeenCalledTimes(1);
   });
 
-  it("shows an error banner when lookup fails", async () => {
+  it("shows an error banner when no booking is found", async () => {
     const mockAction = jest
       .fn<Promise<StatusData>, [StatusData, FormData]>()
       .mockResolvedValue({

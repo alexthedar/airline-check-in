@@ -34,11 +34,11 @@ const PassengerCard = React.memo(
             <strong className="text-gray-400">Destination:</strong>{" "}
             {p.flight_info.destination}
           </p>
-          {p.document_url && (
+          {p.document_base64 && (
             <p>
               <strong className="text-gray-400">Document:</strong>{" "}
               <a
-                href={p.document_url}
+                href={p.document_base64}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-indigo-400 hover:underline"
@@ -50,6 +50,7 @@ const PassengerCard = React.memo(
         </div>
         <div className="mt-4">
           <button
+            type="button" // ← prevent full-page form submit
             onClick={() => onStatusUpdate(p.id, p.check_in_status)}
             className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
           >
